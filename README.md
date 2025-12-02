@@ -4,44 +4,48 @@
 
 Vibe Engine allows you to generate professional film looks using AI and export them as 3D LUTs for use in DaVinci Resolve, Premiere Pro, and other NLEs.
 
-## Features
+![Vibe Engine Interface](https://via.placeholder.com/800x450.png?text=Vibe+Engine+Interface)
 
-- **AI Color Science**: Translate text prompts (e.g., "Matrix green sci-fi", "Vintage 70s Kodak") into precise color grading parameters.
-- **Signal Safety (ASC-CDL)**: Ensures all generated looks stay within broadcast-safe limits using industry-standard ASC-CDL math.
-- **3D LUT Export**: Direct export of high-quality .CUBE files compatible with all major editing software.
-- **Smart Skin Protection**: Automatically isolates and preserves skin tones while grading.
-- **Auto White Balance**: One-click Grey World Assumption white balance.
+## 📚 Documentation
 
-## Usage Guide
+- **[User Guide](./docs/USER_GUIDE.md)**: How to use the web interface, AI generator, and manual controls.
+- **[Resolve Integration Guide](./docs/RESOLVE_WORKFLOW.md)**: How to use the Python automation bridge to sync with DaVinci Resolve.
+- **[Exporting CST Frames](./docs/EXPORT_CST.md)**: How to get the correct "base image" from DaVinci Resolve.
 
-1. **Import Image**: Click "Import Image" to load a reference still from your footage.
-2. **Describe Your Look**: Type a description into the AI Vibe Generator (e.g., "Moody cyberpunk night", "Wes Anderson pastel").
-3. **Generate**: Click "Generate Look" and wait for the AI to analyze and apply the grade.
-4. **Refine**: Use the manual controls (Lift, Gamma, Gain, Temperature, Tint) to fine-tune the result.
-5. **Export**:
-   - **Download .CUBE**: Get a standard LUT file.
-   - **Export to Resolve**: Get a tailored blueprint and LUT for DaVinci Resolve workflow.
+## 🚀 Quick Start
 
-## CRITICAL WORKFLOW: DaVinci Resolve
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-To ensure the look matches what you see in the engine, follow these rules based on your node tree:
+2. **Run the App**:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:5173` in your browser.
 
-### Option A: Using a Color Space Transform (CST) [RECOMMENDED]
-If you place the LUT node **after** a CST node that converts your Log footage to Rec.709:
-- **TURN OFF 'Log Footage'** in Vibe Engine.
-- The engine expects standard Rec.709 input.
+3. **Create a Look**:
+   - Import a still frame.
+   - Type a prompt (e.g., "Blade Runner 2049 orange").
+   - Click **Generate Look**.
 
-### Option B: Grading Raw Log Footage
-If you are applying the LUT directly to Log footage (e.g., S-Log3, V-Log) without a prior transform:
-- **TURN ON 'Log Footage'** in Vibe Engine.
-- This tells the engine to linearize the Log signal before processing, ensuring correct math application.
+4. **Export**:
+   - **Download .CUBE** for general use.
+   - **Export to Resolve** for the automated studio workflow.
 
-## Tech Stack
+## ✨ Key Features
+
+- **AI Color Science**: Translate text prompts into precise color grading parameters.
+- **Signal Safety**: Internal processing uses ASC-CDL math to ensure broadcast-safe results.
+- **Smart Skin Protection**: Automatically isolates and preserves skin tones.
+- **DaVinci Resolve Bridge**: Python automation to instantly apply looks in your NLE.
+
+## 🛠️ Tech Stack
 
 - **Frontend**: React, Vite, TailwindCSS
-- **AI**: Gemini Flash 2.0
-- **Language**: TypeScript
+- **AI**: Google Gemini Flash 2.0
+- **Automation**: Python 3 + DaVinci Resolve Scripting API
 
 ---
-
 *v2.1.0-beta | Built for professional colorists.*

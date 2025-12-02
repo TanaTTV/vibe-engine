@@ -92,9 +92,10 @@ if 'resolve' in locals() and resolve:
 
     for i in range(3):
         # Contrast Baking
+        # Formula: NewOffset = (Offset * Contrast) + (Pivot * (1 - Contrast))
         s = raw_gain[i] * contrast
         final_slope.append(s)
-        o = raw_lift[i] + (pivot * (1 - contrast))
+        o = (raw_lift[i] * contrast) + (pivot * (1 - contrast))
         final_offset.append(o)
 
     # --- AUTO-INSTALL LUT STRATEGY ---
@@ -126,13 +127,14 @@ if 'resolve' in locals() and resolve:
             lut_relative_path = f"VibeEngine/{lut_basename}"
             print(f"   Applying LUT: {lut_relative_path}")
             
-            if current_item.SetLUT(lut_relative_path):
-                print("✅ SetLUT Success!")
+            # Try Node 2 first (Standard Workflow: CST -> Grade)
+            if current_item.SetLUT(2, lut_relative_path):
+                print("✅ SetLUT Success on Node 2!")
                 lut_applied = True
             else:
-                print("⚠️ SetLUT returned False. Trying Index 1...")
+                print("⚠️ Could not set LUT on Node 2. Trying Node 1...")
                 if current_item.SetLUT(1, lut_relative_path):
-                    print("✅ SetLUT(1) Success!")
+                    print("✅ SetLUT Success on Node 1!")
                     lut_applied = True
                     
         except Exception as e:
@@ -150,7 +152,7 @@ if 'resolve' in locals() and resolve:
             return f"{rgb_array[0]:.6f} {rgb_array[1]:.6f} {rgb_array[2]:.6f}"
 
         cdl_map = {
-            "NodeIndex": "1",
+            "NodeIndex": "2",
             "Slope": to_cdl_str(final_slope),
             "Offset": to_cdl_str(final_offset),
             "Power": to_cdl_str(final_power),
@@ -161,9 +163,14 @@ if 'resolve' in locals() and resolve:
         
         try:
             if current_item.SetCDL(cdl_map):
-                print("✅ SetCDL Success!")
+                print("✅ SetCDL Success (Node 2)!")
             else:
-                print("❌ SetCDL Returned False.")
+                print("⚠️ SetCDL failed on Node 2. Retrying on Node 1...")
+                cdl_map["NodeIndex"] = "1"
+                if current_item.SetCDL(cdl_map):
+                    print("✅ SetCDL Success (Node 1)!")
+                else:
+                    print("❌ SetCDL Returned False.")
         except Exception as e:
             print(f"❌ SetCDL Error: {e}")
 
