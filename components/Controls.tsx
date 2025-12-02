@@ -82,7 +82,7 @@ const Controls: React.FC<ControlsProps> = ({
       <div className="p-4 border-b border-resolve-border">
          <h2 className="text-sm font-bold text-white mb-4 uppercase tracking-widest">Input Source</h2>
          <div className="flex gap-2 mb-4">
-             <label className="flex-1 cursor-pointer bg-resolve-input hover:bg-resolve-border transition-colors rounded px-3 py-2 text-xs text-center border border-resolve-border">
+             <label className="flex-1 cursor-pointer w-full py-4 bg-gradient-to-r from-resolve-accent to-blue-600 text-white font-bold rounded shadow-lg uppercase tracking-wider mb-4 text-center hover:brightness-110 transition-all text-xs">
                 <input type="file" className="hidden" accept="image/*" onChange={onImageUpload} />
                 <span>Import Image</span>
              </label>
@@ -109,6 +109,7 @@ const Controls: React.FC<ControlsProps> = ({
 
       {/* AI Section */}
       <div className="p-4 border-b border-resolve-border bg-[#202020]">
+        <div className="border border-indigo-500/30 bg-indigo-900/10 rounded-lg p-3 mb-4 shadow-[0_0_15px_rgba(99,102,241,0.2)] shadow-indigo-500/20">
         <h2 className="text-sm font-bold text-white mb-2 uppercase tracking-widest flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-resolve-accent animate-pulse"></span>
             AI Vibe Generator
@@ -126,11 +127,12 @@ const Controls: React.FC<ControlsProps> = ({
             className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider transition-all
                 ${isGenerating 
                     ? 'bg-gray-600 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-resolve-accent to-blue-600 hover:brightness-110 text-white'
+                    : 'bg-gradient-to-r from-resolve-accent to-blue-600 hover:brightness-110 hover:shadow-cyan-500/50 text-white'
                 }`}
         >
             {isGenerating ? 'Analyzing Vibe...' : 'Generate Look'}
         </button>
+        </div>
       </div>
 
       {/* Manual Controls */}

@@ -374,9 +374,9 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   return (
     <div className="flex flex-row w-full h-full gap-4">
       {/* Main Preview */}
-      <div className="flex-1 relative flex items-center justify-center bg-black rounded-lg overflow-hidden border border-resolve-border">
+      <div className="flex-1 relative flex items-center justify-center bg-black rounded-lg overflow-hidden border border-resolve-border shadow-2xl border-opacity-50">
         <canvas 
-          ref={canvasRef} 
+          ref={canvasRef}  
           className="max-w-full max-h-[70vh] object-contain"
         />
         {isProcessing && (

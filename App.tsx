@@ -117,9 +117,9 @@ const App: React.FC = () => {
       
       <main className="flex-1 flex flex-col relative bg-[#111]">
         {/* Top Bar */}
-        <div className="h-12 border-b border-resolve-border flex items-center px-6 justify-between bg-resolve-panel">
+        <div className="h-12 border-b border-resolve-border flex items-center px-6 justify-between bg-resolve-panel/90 backdrop-blur-md">
             <h1 className="text-white font-bold tracking-widest uppercase text-sm">
-              <span className="text-resolve-accent">Vibe</span>Engine <span className="text-xs text-gray-500 ml-2">v2.0 Pro</span>
+              <span className="text-resolve-accent">VIBE</span> ENGINE <span className="text-xs text-gray-500 ml-2">v2.1 Pro <span className="text-orange-500 font-bold">Beta</span></span>
             </h1>
             <div className="flex items-center gap-4 text-xs text-gray-500">
                <span>Signal Safe Mode: {config.safeRange ? 'Active' : 'Off'}</span>
