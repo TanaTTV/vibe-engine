@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ColorParams, LutConfig, RGB, DEFAULT_PARAMS } from '../types';
+import { ColorParams, LutConfig, RGB, DEFAULT_PARAMS, InputColorSpace } from '../types';
 
 interface ControlsProps {
   params: ColorParams;
@@ -88,14 +88,18 @@ const Controls: React.FC<ControlsProps> = ({
              </label>
          </div>
 
-         <div className="flex items-center justify-between bg-resolve-input p-2 rounded border border-resolve-border mb-2">
-             <span className="text-xs text-gray-400">Log Footage</span>
-             <div 
-               className={`w-8 h-4 rounded-full relative cursor-pointer transition-colors ${config.inputLog ? 'bg-resolve-accent' : 'bg-gray-600'}`}
-               onClick={() => setConfig(prev => ({...prev, inputLog: !prev.inputLog}))}
-             >
-                 <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${config.inputLog ? 'left-4.5' : 'left-0.5'}`} style={{ left: config.inputLog ? '18px' : '2px'}} />
-             </div>
+         {/* IDT Selector */}
+         <div className="mb-4">
+            <label className="text-xs text-gray-400 block mb-2 uppercase tracking-wide">Camera Input (IDT)</label>
+            <select
+                className="w-full bg-resolve-input border border-resolve-border text-white text-xs rounded p-2 focus:border-resolve-accent outline-none"
+                value={config.inputColorSpace}
+                onChange={(e) => setConfig(prev => ({ ...prev, inputColorSpace: e.target.value as InputColorSpace }))}
+            >
+                {Object.values(InputColorSpace).map((space) => (
+                    <option key={space} value={space}>{space}</option>
+                ))}
+            </select>
          </div>
 
          {/* Upgrade 3: Auto White Balance & Reset */}

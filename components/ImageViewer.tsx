@@ -14,7 +14,7 @@ interface ImageViewerProps {
 // We define this as a string to avoid 404 errors when the browser tries to fetch
 // a .ts file or an unbundled worker file. This guarantees the worker runs.
 const WORKER_CODE = `
-  /* MATH HELPERS (Duplicated from lutEngine to be self-contained) */
+  /* MATH HELPERS (Duplicated from colorTransforms.ts and lutEngine.ts) */
   
   const ROLLOFF_START = 0.8;
 
@@ -26,7 +26,76 @@ const WORKER_CODE = `
     return ROLLOFF_START + (compressed * scale);
   };
 
-  const applyLogTransform = (val) => {
+  // Matrix Math
+  const applyMatrix = (r, g, b, m) => {
+    return {
+        r: r * m[0] + g * m[1] + b * m[2],
+        g: r * m[3] + g * m[4] + b * m[5],
+        b: r * m[6] + g * m[7] + b * m[8]
+    };
+  };
+
+  // --- ARRI ---
+  const LOGC_CUT = 0.010591;
+  const LOGC_A = 5.555556;
+  const LOGC_B = 0.052272;
+  const LOGC_C = 2.473932;
+  const LOGC_D = 0.385537;
+  const LOGC_E = 5.367655;
+  const LOGC_F = 0.092809;
+
+  const arriLogC3ToLinear = (val) => {
+    if (val > LOGC_E * LOGC_CUT + LOGC_F) {
+        return (Math.pow(10, (val - LOGC_D) / LOGC_C) - LOGC_B) / LOGC_A;
+    } else {
+        return (val - LOGC_F) / LOGC_E;
+    }
+  };
+
+  const MAT_AWG_TO_REC709 = [
+    1.6175, -0.5373, -0.0802,
+    -0.0706, 1.3346, -0.2640,
+    -0.0211, -0.2270, 1.2481
+  ];
+
+  // --- SONY ---
+  const sLog3ToLinear = (val) => {
+    if (val >= 171.210294 / 1023.0) {
+        return Math.pow(10, (val * 1023.0 - 420.0) / 261.5) * (0.18 + 0.01) - 0.01;
+    } else {
+        return (val * 1023.0 - 95.0) * 0.01125000 / (171.210294 - 95.0);
+    }
+  };
+
+  const MAT_SGAMUT3CINE_TO_REC709 = [
+    1.6475, -0.3561, -0.2914,
+    -0.0645, 1.1882, -0.1237,
+    -0.0094, -0.0384, 1.0478
+  ];
+
+  // --- CANON ---
+  const cLog3ToLinear = (val) => {
+    if (val < 0.0975) return 0;
+    return Math.pow(10, (val - 0.06297) / 0.5284) - 0.0152;
+  };
+
+  const MAT_CINEMA_GAMUT_TO_REC709 = [
+    1.8688, -0.7302, -0.1386,
+    -0.1287, 1.3191, -0.1904,
+    -0.0197, -0.1508, 1.1705
+  ];
+
+  // --- ODT ---
+  const linearToRec709 = (val) => {
+    if (val < 0.018) {
+        return val * 4.5;
+    } else {
+        return 1.099 * Math.pow(val, 0.45) - 0.099;
+    }
+  };
+
+  // Legacy Generic Log
+  const applyGenericLogTransform = (val) => {
       const slope = 5.0;
       const offset = 0.5;
       const sigmoid = 1 / (1 + Math.exp(-slope * (val - offset)));
@@ -49,19 +118,59 @@ const WORKER_CODE = `
     return 0.5 * (1 + Math.cos((dist / range) * Math.PI));
   };
 
-  const processPixel = (r, g, b, params, config) => {
-    let nr = r;
-    let ng = g;
-    let nb = b;
-
-    // 1. Input Transform
-    if (config.inputLog) {
-      nr = applyLogTransform(nr);
-      ng = applyLogTransform(ng);
-      nb = applyLogTransform(nb);
+  // Helper to apply IDT
+  const applyIDT = (r, g, b, space) => {
+    if (space === 'Generic Log') {
+       const nr = applyGenericLogTransform(r);
+       const ng = applyGenericLogTransform(g);
+       const nb = applyGenericLogTransform(b);
+       return { r: nr, g: ng, b: nb };
     }
+    if (space === 'Arri LogC3') {
+       const linR = arriLogC3ToLinear(r);
+       const linG = arriLogC3ToLinear(g);
+       const linB = arriLogC3ToLinear(b);
+       const gamut = applyMatrix(linR, linG, linB, MAT_AWG_TO_REC709);
+       return {
+         r: linearToRec709(gamut.r),
+         g: linearToRec709(gamut.g),
+         b: linearToRec709(gamut.b)
+       };
+    }
+    if (space === 'Sony S-Log3') {
+       const linR = sLog3ToLinear(r);
+       const linG = sLog3ToLinear(g);
+       const linB = sLog3ToLinear(b);
+       const gamut = applyMatrix(linR, linG, linB, MAT_SGAMUT3CINE_TO_REC709);
+       return {
+         r: linearToRec709(gamut.r),
+         g: linearToRec709(gamut.g),
+         b: linearToRec709(gamut.b)
+       };
+    }
+    if (space === 'Canon C-Log3') {
+       const linR = cLog3ToLinear(r);
+       const linG = cLog3ToLinear(g);
+       const linB = cLog3ToLinear(b);
+       const gamut = applyMatrix(linR, linG, linB, MAT_CINEMA_GAMUT_TO_REC709);
+       return {
+         r: linearToRec709(gamut.r),
+         g: linearToRec709(gamut.g),
+         b: linearToRec709(gamut.b)
+       };
+    }
+    // Default / Rec.709
+    return { r, g, b };
+  };
 
-    // 1.5 Auto White Balance
+  const processPixel = (r, g, b, params, config) => {
+    // 1. Input Transform
+    const idt = applyIDT(r, g, b, config.inputColorSpace);
+    let nr = idt.r;
+    let ng = idt.g;
+    let nb = idt.b;
+
+    // 1.5 Auto Balance
     if (params.balance) {
       nr *= params.balance.r;
       ng *= params.balance.g;
@@ -73,18 +182,15 @@ const WORKER_CODE = `
     const baseG = ng;
     const baseB = nb;
 
-    // 2. ASC-CDL (Gain -> Lift -> Gamma)
-    // Gain (Slope)
+    // 2. ASC-CDL
     nr *= params.gain.r;
     ng *= params.gain.g;
     nb *= params.gain.b;
 
-    // Lift (Offset)
     nr += params.lift.r;
     ng += params.lift.g;
     nb += params.lift.b;
 
-    // Gamma (Power)
     const safeGamma = (v, gm) => (v < 0 ? 0 : Math.pow(v, 1 / Math.max(0.1, gm)));
     nr = safeGamma(nr, params.gamma.r);
     ng = safeGamma(ng, params.gamma.g);
@@ -143,15 +249,11 @@ const WORKER_CODE = `
       let g = data[i + 1] / 255;
       let b = data[i + 2] / 255;
 
-      if (config.inputLog) {
-        r = applyLogTransform(r);
-        g = applyLogTransform(g);
-        b = applyLogTransform(b);
-      }
-
-      sumR += r;
-      sumG += g;
-      sumB += b;
+      const res = applyIDT(r, g, b, config.inputColorSpace);
+      
+      sumR += res.r;
+      sumG += res.g;
+      sumB += res.b;
     }
 
     const avgR = sumR / pixelCount || 0.001;

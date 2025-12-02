@@ -15,9 +15,10 @@ Welcome to **Vibe Engine**, the AI-powered color grading assistant. This tool al
 ### Input Source
 - **Import Image**: Click the large blue button to upload a still frame from your footage.
   - *Tip:* Use a high-quality JPEG or PNG export from your timeline for the best accuracy.
-- **Log Footage Toggle**: 
-  - **OFF (Default)**: Use this if your image is already converted to Rec.709 (standard web/monitor colors). **Recommended workflow.**
-  - **ON**: Use this only if you are uploading a raw, washed-out Log image (e.g., S-Log3, V-Log).
+- **Camera Input (IDT)**: 
+  - **Rec.709 (Default)**: Use this if your image is already converted to Rec.709 (standard web/monitor colors). **Recommended workflow.**
+  - **Camera Specific Log**: Select your camera's Log format (e.g., **Arri LogC3**, **Sony S-Log3**, **Canon C-Log3**) if uploading raw Log footage. The engine will apply the correct Input Device Transform (IDT) to linearize the image.
+  - **Generic Log**: A fallback S-curve for unlisted Log formats.
 - **Auto White Balance**: Analyzes the image and attempts to neutralize color casts using a "Grey World" algorithm.
 
 ### AI Vibe Generator
@@ -56,4 +57,3 @@ You can fine-tune the AI's result or grade from scratch using the sliders:
   1. A `.cube` LUT file.
   2. A `.json` "Blueprint" file.
 - This is for the **automated workflow** described in the [Resolve Integration Guide](./RESOLVE_WORKFLOW.md).
-

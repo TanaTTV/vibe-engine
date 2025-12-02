@@ -1,4 +1,14 @@
-import { ColorParams, LutConfig, RGB } from '../types';
+import { ColorParams, LutConfig, RGB, InputColorSpace } from '../types';
+import { 
+  arriLogC3ToLinear, 
+  sLog3ToLinear, 
+  cLog3ToLinear, 
+  linearToRec709,
+  applyMatrix,
+  MAT_AWG_TO_REC709,
+  MAT_SGAMUT3CINE_TO_REC709,
+  MAT_CINEMA_GAMUT_TO_REC709
+} from './colorTransforms';
 
 /**
  * Signal Safety Constants
@@ -13,7 +23,8 @@ const applyRolloff = (val: number): number => {
   return ROLLOFF_START + (compressed * scale);
 };
 
-const applyLogTransform = (val: number): number => {
+// Legacy generic log transform (keeping for backward compatibility or "Generic Log" mode)
+const applyGenericLogTransform = (val: number): number => {
     const slope = 5.0;
     const offset = 0.5;
     const sigmoid = 1 / (1 + Math.exp(-slope * (val - offset)));
@@ -37,8 +48,68 @@ const getSkinWeight = (r: number, g: number, b: number): number => {
 };
 
 /**
+ * Helper to apply Input Device Transform (IDT) based on config
+ * Returns RGB in Display Rec.709 space (ready for grading)
+ */
+const applyIDT = (r: number, g: number, b: number, space: InputColorSpace): { r: number, g: number, b: number } => {
+  switch (space) {
+    case InputColorSpace.REC709:
+      return { r, g, b };
+    
+    case InputColorSpace.LOG_GENERIC: {
+      const nr = applyGenericLogTransform(r);
+      const ng = applyGenericLogTransform(g);
+      const nb = applyGenericLogTransform(b);
+      return { r: nr, g: ng, b: nb };
+    }
+
+    case InputColorSpace.ARRI_LOGC3: {
+      // 1. De-Log (LogC3 -> Linear)
+      const linR = arriLogC3ToLinear(r);
+      const linG = arriLogC3ToLinear(g);
+      const linB = arriLogC3ToLinear(b);
+      // 2. Gamut (AWG -> Rec.709)
+      const gamut = applyMatrix(linR, linG, linB, MAT_AWG_TO_REC709);
+      // 3. ODT (Linear -> Rec.709 Gamma)
+      return {
+        r: linearToRec709(gamut.r),
+        g: linearToRec709(gamut.g),
+        b: linearToRec709(gamut.b)
+      };
+    }
+
+    case InputColorSpace.SONY_SLOG3: {
+      const linR = sLog3ToLinear(r);
+      const linG = sLog3ToLinear(g);
+      const linB = sLog3ToLinear(b);
+      const gamut = applyMatrix(linR, linG, linB, MAT_SGAMUT3CINE_TO_REC709);
+      return {
+        r: linearToRec709(gamut.r),
+        g: linearToRec709(gamut.g),
+        b: linearToRec709(gamut.b)
+      };
+    }
+
+    case InputColorSpace.CANON_CLOG3: {
+      const linR = cLog3ToLinear(r);
+      const linG = cLog3ToLinear(g);
+      const linB = cLog3ToLinear(b);
+      const gamut = applyMatrix(linR, linG, linB, MAT_CINEMA_GAMUT_TO_REC709);
+      return {
+        r: linearToRec709(gamut.r),
+        g: linearToRec709(gamut.g),
+        b: linearToRec709(gamut.b)
+      };
+    }
+
+    default:
+      return { r, g, b };
+  }
+};
+
+/**
  * Calculates Auto White Balance multipliers using Grey World Assumption.
- * Note: Should be run on image data AFTER log transform if log is active.
+ * Note: Should be run on image data AFTER IDT transform.
  */
 export const calculateAutoBalance = (
   data: Uint8ClampedArray, 
@@ -55,16 +126,12 @@ export const calculateAutoBalance = (
     let g = data[i + 1] / 255;
     let b = data[i + 2] / 255;
 
-    // Must normalize input first if Log, otherwise grey assumption fails on flat footage
-    if (config.inputLog) {
-      r = applyLogTransform(r);
-      g = applyLogTransform(g);
-      b = applyLogTransform(b);
-    }
-
-    sumR += r;
-    sumG += g;
-    sumB += b;
+    // Normalize input using IDT
+    const res = applyIDT(r, g, b, config.inputColorSpace);
+    
+    sumR += res.r;
+    sumG += res.g;
+    sumB += res.b;
   }
 
   const avgR = sumR / pixelCount || 0.001;
@@ -93,19 +160,14 @@ export const processPixel = (
   params: ColorParams, 
   config: LutConfig
 ): RGB => {
-  let nr = r;
-  let ng = g;
-  let nb = b;
-
-  // 1. Input Transform (Log -> Linear-ish)
-  if (config.inputLog) {
-    nr = applyLogTransform(nr);
-    ng = applyLogTransform(ng);
-    nb = applyLogTransform(nb);
-  }
+  // 1. Input Transform (IDT -> Rec.709)
+  const idt = applyIDT(r, g, b, config.inputColorSpace);
+  let nr = idt.r;
+  let ng = idt.g;
+  let nb = idt.b;
 
   // 1.5 Auto White Balance (Step 0 - Upgrade 3)
-  // Applied after Log (so we are working in quasi-linear) but before Creative Loop
+  // Applied after IDT (so we are working in quasi-linear Rec.709) but before Creative Loop
   nr *= params.balance.r;
   ng *= params.balance.g;
   nb *= params.balance.b;

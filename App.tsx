@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import Controls from './components/Controls';
 import ImageViewer from './components/ImageViewer';
-import { DEFAULT_PARAMS, ColorParams, LutConfig, RGB, NodeBlueprint } from './types';
+import { DEFAULT_PARAMS, ColorParams, LutConfig, RGB, NodeBlueprint, InputColorSpace } from './types';
 import { generateParamsFromVibe } from './services/geminiService';
 import { generateLutFile } from './services/lutEngine';
 import { animateParams } from './services/animationService';
@@ -11,7 +11,10 @@ const PLACEHOLDER_IMG = "https://picsum.photos/id/234/1200/800";
 
 const App: React.FC = () => {
   const [params, setParams] = useState<ColorParams>(DEFAULT_PARAMS);
-  const [config, setConfig] = useState<LutConfig>({ inputLog: false, safeRange: true });
+  const [config, setConfig] = useState<LutConfig>({ 
+    inputColorSpace: InputColorSpace.REC709, 
+    safeRange: true 
+  });
   const [imageSrc, setImageSrc] = useState<string | null>(PLACEHOLDER_IMG);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -80,11 +83,13 @@ const App: React.FC = () => {
     downloadFile(`${basename}.cube`, lutContent, 'text/plain');
 
     // 2. Generate & Download JSON
+    const isLog = config.inputColorSpace !== InputColorSpace.REC709;
+    
     const blueprint: NodeBlueprint = {
         timestamp,
         cst: {
-            is_log: config.inputLog,
-            input_gamma: config.inputLog ? "Sony S-Log3" : "Rec.709",
+            is_log: isLog,
+            input_gamma: config.inputColorSpace,
             output_gamma: "Rec.709"
         },
         primary: {
@@ -127,7 +132,7 @@ const App: React.FC = () => {
             </h1>
             <div className="flex items-center gap-4 text-xs text-gray-500">
                <span>Signal Safe Mode: {config.safeRange ? 'Active' : 'Off'}</span>
-               {config.inputLog && <span className="text-yellow-500">Log Input Active</span>}
+               {config.inputColorSpace !== InputColorSpace.REC709 && <span className="text-yellow-500">{config.inputColorSpace} Active</span>}
             </div>
         </div>
 

@@ -17,8 +17,16 @@ export interface ColorParams {
   balance: RGB; // Auto White Balance Multipliers
 }
 
+export enum InputColorSpace {
+  REC709 = 'Rec.709',
+  LOG_GENERIC = 'Generic Log',
+  ARRI_LOGC3 = 'Arri LogC3',
+  SONY_SLOG3 = 'Sony S-Log3',
+  CANON_CLOG3 = 'Canon C-Log3'
+}
+
 export interface LutConfig {
-  inputLog: boolean; // True if input is LOG footage
+  inputColorSpace: InputColorSpace; // Replaces inputLog
   safeRange: boolean; // True to enforce strict highlight rolloff
 }
 
