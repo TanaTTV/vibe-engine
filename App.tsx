@@ -28,16 +28,44 @@ const App: React.FC = () => {
     }
   };
 
+  const getLowResImage = async (): Promise<string | undefined> => {
+     if (!imageSrc) return undefined;
+     
+     return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = imageSrc;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            // Downscale to max 512px for AI speed/token savings
+            const scale = Math.min(1, 512 / Math.max(img.width, img.height));
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = () => resolve(undefined);
+     });
+  };
+
   const handleAIGenerate = async (prompt: string) => {
     setIsGenerating(true);
     setErrorMsg(null);
     try {
       const startParams = params; // Capture current params
-      const newParams = await generateParamsFromVibe(prompt);
+      
+      // Get image context
+      const imageBase64 = await getLowResImage();
+      
+      const newParams = await generateParamsFromVibe(prompt, imageBase64);
       
       // Animate from current params to new params
       // Duration: 1500ms for dramatic effect
       animateParams(startParams, newParams, 1500, (currentParams) => {
+         // Preserve the metadata fields which are not animated
+         currentParams.aiThought = newParams.aiThought;
+         currentParams.aiPalette = newParams.aiPalette;
          setParams(currentParams);
       });
 

@@ -15,6 +15,10 @@ export interface ColorParams {
   contrastPivot: number; // 0.0 to 1.0 (usually 0.435)
   skinProtect: number; // 0.0 to 1.0 (Strength of skin tone protection)
   balance: RGB; // Auto White Balance Multipliers
+  
+  // AI Metadata
+  aiThought?: string; // Explanation of the grade
+  aiPalette?: string; // Description of the colors detected/applied
 }
 
 export enum InputColorSpace {
@@ -41,6 +45,8 @@ export const DEFAULT_PARAMS: ColorParams = {
   contrastPivot: 0.435,
   skinProtect: 0.0,
   balance: { r: 1, g: 1, b: 1 },
+  aiThought: '',
+  aiPalette: ''
 };
 
 export interface ScopeData {

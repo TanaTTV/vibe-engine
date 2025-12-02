@@ -5,6 +5,8 @@ import { ColorParams, DEFAULT_PARAMS } from '../types';
 const colorParamsSchema: Schema = {
   type: Type.OBJECT,
   properties: {
+    aiThought: { type: Type.STRING, description: "Detailed reasoning for grading decisions, referencing film stocks and exposure." },
+    aiPalette: { type: Type.STRING, description: "Short description of the color palette (e.g. 'Teal shadows, warm highlights')." },
     lift: {
       type: Type.OBJECT,
       properties: {
@@ -39,10 +41,10 @@ const colorParamsSchema: Schema = {
     contrastPivot: { type: Type.NUMBER, description: "Contrast pivot (usually 0.435)" },
     skinProtect: { type: Type.NUMBER, description: "Skin protection strength (0.0 to 1.0)" }
   },
-  required: ["lift", "gamma", "gain", "saturation", "temperature", "tint", "contrast", "contrastPivot", "skinProtect"]
+  required: ["aiThought", "aiPalette", "lift", "gamma", "gain", "saturation", "temperature", "tint", "contrast", "contrastPivot", "skinProtect"]
 };
 
-export const generateParamsFromVibe = async (vibe: string): Promise<ColorParams> => {
+export const generateParamsFromVibe = async (vibe: string, imageBase64?: string): Promise<ColorParams> => {
   if (!process.env.API_KEY) {
     console.error("API Key missing");
     throw new Error("API Key is missing. Please set REACT_APP_GEMINI_API_KEY.");
@@ -51,19 +53,80 @@ export const generateParamsFromVibe = async (vibe: string): Promise<ColorParams>
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: `
-      ROLE: Senior Hollywood Color Scientist (v2.1 Pro).
-      TASK: Translate "User Vibe" into signal-safe ASC-CDL JSON.
-      RULES:
-      1. HARMONY: "Teal & Orange" -> Lift Cyan (-R, +B), Gain Orange (+R, -B). "Cyberpunk" -> Gain Magenta/Green.
-      2. SAFETY: Lift [-0.15, 0.15], Gamma [0.8, 1.2], Gain [0.5, 1.8].
-      3. FEATURES: If look is heavy/tinted, set 'skinProtect' to 0.5+. Default 'contrastPivot' to 0.435.
-      OUTPUT: JSON object { lift, gamma, gain, saturation, temperature, tint, contrast, contrastPivot, skinProtect }.
+    // Construct the prompt parts
+    const promptText = `
+      YOU ARE A MASTER HOLLYWOOD COLORIST (Senior DI Colorist).
+      Your goal is to grade the provided image to match the user's requested "Vibe" using strictly ASC-CDL (Slope/Offset/Power) parameters.
+
+      ### CORE PHILOSOPHY: SUBTRACTIVE COLOR & DENSITY
+      - Digital color adds light. Film color subtracts light.
+      - To make shadows Teal: Do NOT just add Blue. Instead, SUBTRACT Red. This creates "dense", rich blacks.
+      - To make warm highlights: Do NOT just add Red. Subtract Blue. This creates creamy, filmic whites.
+      - Density: Maintain saturation in midtones but roll it off in deep shadows and bright highlights.
+
+      ### ANALYSIS PROTOCOL (Thinking Process)
+      1. **EXPOSURE CHECK**: Look at the input image.
+         - Is it dark? -> Lift shadows (Lift > 0).
+         - Is it flat/foggy? -> Lower shadows (Lift < 0), Increase Contrast.
+         - Is it bright? -> Protect highlights (Gain <= 1.0).
+      2. **PALETTE SELECTION**:
+         - "Oppenheimer" = Kodak 5222 (B&W) or 5219 (Color). Palette: Teal/Green Shadows, Dirty Golden Highlights. Desaturated but high contrast.
+         - "Matrix" = Fuji Eterna + Green bias.
+         - "Wes Anderson" = Pastel, low contrast, warm.
+      3. **CDL MAPPING**:
+         - **LIFT (Offset)**: Shadows. Use for color tinting the blacks (e.g. -Red for Teal).
+         - **GAMMA (Power)**: Midtones. Use for overall brightness and mood.
+         - **GAIN (Slope)**: Highlights. Use for white balance and paper-white tint.
+
+      ### STYLE LIBRARY (Specific Recipes)
+      1. **OPPENHEIMER / NOLAN**:
+         - *Concept*: Bi-color palette. Cyan vs Orange.
+         - *Shadows*: Heavy push to Teal (Lift R -0.04, G +0.01, B +0.02).
+         - *Mids*: Lower Gamma slightly (0.95) for weight.
+         - *Highs*: Warm/Golden (Gain R +0.1, G +0.05, B -0.1).
+         - *Sat*: 0.85 (Desaturated).
+         - *Contrast*: 1.2 (High).
+
+      2. **BLADE RUNNER 2049**:
+         - *Concept*: Monochromatic Orange or Blue.
+         - *If "Orange Scene"*: Global warmth (Temp +0.5), Lift Red.
+         - *If "Blue Scene"*: Global cool (Temp -0.5), Lift Blue.
+         
+      3. **VINTAGE KODAK (Portra 400)**:
+         - *Concept*: Warmth, nostalgia.
+         - *Highlights*: Soft Yellow.
+         - *Shadows*: Lifted slightly (milky).
+
+      ### SAFETY LIMITS
+      - Lift: [-0.2, 0.2] (Do not break blacks)
+      - Gamma: [0.6, 1.4]
+      - Gain: [0.5, 2.0]
+      - Saturation: [0.0, 2.0]
+
+      ### OUTPUT REQUIREMENT
+      Explain your reasoning in 'aiThought'. Be specific: "I see the image is dark, so I am lifting shadows by +0.05. For the Oppenheimer look, I am subtracting Red from the shadows to create a dense Cyan..."
       
       User Vibe: "${vibe}"
-      `,
+    `;
+
+    const contents: any[] = [{ text: promptText }];
+
+    // If we have an image, add it to the prompt
+    if (imageBase64) {
+      // Remove data URL prefix if present
+      const base64Data = imageBase64.split(',')[1] || imageBase64;
+      
+      contents.push({
+        inlineData: {
+          mimeType: "image/jpeg",
+          data: base64Data
+        }
+      });
+    }
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: contents,
       config: {
         responseMimeType: "application/json",
         responseSchema: colorParamsSchema,

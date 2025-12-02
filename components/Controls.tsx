@@ -145,6 +145,15 @@ const Controls: React.FC<ControlsProps> = ({
         >
             {isGenerating ? 'Analyzing Vibe...' : 'Generate Look'}
         </button>
+
+        {/* AI Thought Display (New Feature) */}
+        {(params.aiThought || params.aiPalette) && !isGenerating && (
+            <div className="mt-3 pt-3 border-t border-indigo-500/20 text-xs">
+                {params.aiPalette && <p className="text-indigo-200 font-medium mb-1">{params.aiPalette}</p>}
+                {params.aiThought && <p className="text-gray-400 italic leading-relaxed">"{params.aiThought}"</p>}
+            </div>
+        )}
+
         </div>
       </div>
 
