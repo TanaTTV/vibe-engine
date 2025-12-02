@@ -4,6 +4,7 @@ import ImageViewer from './components/ImageViewer';
 import { DEFAULT_PARAMS, ColorParams, LutConfig, RGB, NodeBlueprint } from './types';
 import { generateParamsFromVibe } from './services/geminiService';
 import { generateLutFile } from './services/lutEngine';
+import { animateParams } from './services/animationService';
 
 // Default placeholder image (Cinematic street scene)
 const PLACEHOLDER_IMG = "https://picsum.photos/id/234/1200/800"; 
@@ -28,12 +29,15 @@ const App: React.FC = () => {
     setIsGenerating(true);
     setErrorMsg(null);
     try {
+      const startParams = params; // Capture current params
       const newParams = await generateParamsFromVibe(prompt);
-      // Preserve existing balance if any
-      setParams(prev => ({
-        ...newParams,
-        balance: prev.balance
-      }));
+      
+      // Animate from current params to new params
+      // Duration: 1500ms for dramatic effect
+      animateParams(startParams, newParams, 1500, (currentParams) => {
+         setParams(currentParams);
+      });
+
     } catch (err: any) {
       setErrorMsg("AI Failed: " + (err.message || "Unknown error"));
     } finally {
