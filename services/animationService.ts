@@ -52,7 +52,12 @@ export const animateParams = (
       // Preserve balance if it exists in startParams, otherwise use endParams or null
       balance: startParams.balance && endParams.balance 
         ? lerpRGB(startParams.balance, endParams.balance, easedProgress) 
-        : (endParams.balance || startParams.balance)
+        : (endParams.balance || startParams.balance),
+      
+      // Fix 2: Preserve AI Metadata during animation (no interpolation needed for strings)
+      // We use the endParams value so the text updates immediately or stays consistent
+      aiThought: endParams.aiThought,
+      aiPalette: endParams.aiPalette
     };
 
     onUpdate(currentParams);
