@@ -141,25 +141,30 @@ if 'resolve' in locals() and resolve:
         print(f"⚠️ LUT file not found: {lut_filename}")
 
     # --- STEP 2: APPLY CDL ---
-    def to_cdl_str(rgb_array):
-        return f"{rgb_array[0]:.6f} {rgb_array[1]:.6f} {rgb_array[2]:.6f}"
+    # Only apply CDL if LUT was NOT applied, to avoid double-grading.
+    # The Vibe Engine LUT already contains Lift/Gamma/Gain/Contrast.
+    if lut_applied:
+        print("ℹ️  LUT applied successfully. Skipping CDL to prevent double-application of grade.")
+    else:
+        def to_cdl_str(rgb_array):
+            return f"{rgb_array[0]:.6f} {rgb_array[1]:.6f} {rgb_array[2]:.6f}"
 
-    cdl_map = {
-        "NodeIndex": "1",
-        "Slope": to_cdl_str(final_slope),
-        "Offset": to_cdl_str(final_offset),
-        "Power": to_cdl_str(final_power),
-        "Saturation": str(saturation)
-    }
-    
-    print(f"DEBUG: Sending CDL Map -> {cdl_map}")
-    
-    try:
-        if current_item.SetCDL(cdl_map):
-            print("✅ SetCDL Success!")
-        else:
-            print("❌ SetCDL Returned False.")
-    except Exception as e:
-        print(f"❌ SetCDL Error: {e}")
+        cdl_map = {
+            "NodeIndex": "1",
+            "Slope": to_cdl_str(final_slope),
+            "Offset": to_cdl_str(final_offset),
+            "Power": to_cdl_str(final_power),
+            "Saturation": str(saturation)
+        }
+        
+        print(f"DEBUG: Sending CDL Map -> {cdl_map}")
+        
+        try:
+            if current_item.SetCDL(cdl_map):
+                print("✅ SetCDL Success!")
+            else:
+                print("❌ SetCDL Returned False.")
+        except Exception as e:
+            print(f"❌ SetCDL Error: {e}")
 
     print("🏁 DONE! Grade Updated.")

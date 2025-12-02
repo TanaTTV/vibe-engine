@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ColorParams, LutConfig, RGB } from '../types';
+import { ColorParams, LutConfig, RGB, DEFAULT_PARAMS } from '../types';
 
 interface ControlsProps {
   params: ColorParams;
@@ -98,13 +98,22 @@ const Controls: React.FC<ControlsProps> = ({
              </div>
          </div>
 
-         {/* Upgrade 3: Auto White Balance */}
-         <button 
-           onClick={onRequestAutoWB}
-           className="w-full py-1.5 text-[10px] border border-gray-600 hover:border-gray-400 text-gray-400 uppercase tracking-wider rounded transition-colors"
-         >
-           Auto White Balance
-         </button>
+         {/* Upgrade 3: Auto White Balance & Reset */}
+         <div className="flex gap-2">
+           <button 
+             onClick={onRequestAutoWB}
+             className="flex-1 py-1.5 text-[10px] border border-gray-600 hover:border-gray-400 text-gray-400 uppercase tracking-wider rounded transition-colors"
+           >
+             Auto White Balance
+           </button>
+           <button 
+             onClick={() => setParams(DEFAULT_PARAMS)}
+             className="px-3 py-1.5 text-[10px] border border-red-900/30 text-red-400 hover:text-red-300 hover:border-red-400/50 uppercase tracking-wider rounded transition-colors"
+             title="Reset all parameters to default"
+           >
+             Reset
+           </button>
+         </div>
       </div>
 
       {/* AI Section */}
