@@ -32,7 +32,7 @@ Turn natural language descriptions into professional 3D LUTs. Type "Blade Runner
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/vibe-engine.git
+git clone https://github.com/TanaTTV/vibe-engine.git
 cd vibe-engine
 
 # Install dependencies
