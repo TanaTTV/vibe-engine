@@ -202,6 +202,24 @@ colors: {
 - Python 3.6+
 - Enable scripting: Resolve → Preferences → System → General → External Scripting: **Local**
 
+### Expected Node Structure
+
+The bridge applies LUTs to **Node 2** by default, following the standard professional workflow:
+
+```
+┌──────────┐    ┌──────────┐    ┌──────────┐
+│  Node 1  │ -> │  Node 2  │ -> │  Node 3  │
+│   CST    │    │  VIBE ✨ │    │ Secondary│
+│ (if Log) │    │  (LUT)   │    │  Grades  │
+└──────────┘    └──────────┘    └──────────┘
+```
+
+- **Node 1**: Color Space Transform (CST) - converts your camera's Log format to Rec.709
+- **Node 2**: Where Vibe Engine applies your LUT ← *applied here*
+- **Node 3+**: Secondary corrections, power windows, qualifiers, etc.
+
+> **Note**: If Node 2 fails, the bridge falls back to Node 1. Make sure you have at least 2 nodes in your tree before syncing.
+
 ### Live Sync (Bridge Server)
 
 ```bash
@@ -217,7 +235,7 @@ This starts a Flask server on `localhost:8000`. Click "Sync to Resolve" in the w
 1. Click "Export JSON" to download the grade blueprint
 2. Run `python automation/build_grade.py`
 3. Select the JSON file when prompted
-4. The script installs the LUT and applies it to your current node
+4. The script installs the LUT and applies it to Node 2 (or Node 1 as fallback)
 
 ---
 
