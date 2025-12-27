@@ -22,6 +22,22 @@ Turn natural language descriptions into professional 3D LUTs. Type "Blade Runner
 
 ---
 
+## ⚠️ Known Limitations
+
+Be aware of what this tool **can't** do (yet):
+
+| Limitation | Why |
+|------------|-----|
+| **AI doesn't see your image** | It only reads your text prompt - it's not analyzing the actual footage |
+| **Single LUT output** | No multi-node grading chains; one look per generation |
+| **No reference matching** | Can't match a grade from a reference photo (feature idea for contributors!) |
+| **Resolve Studio required** | The free version of DaVinci Resolve doesn't support external scripting |
+| **Limited camera profiles** | Only ARRI, Sony, Canon Log supported; no RED, Blackmagic, Panasonic yet |
+
+These are all solvable - PRs welcome!
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -54,6 +70,23 @@ Open `http://localhost:3000` in your browser.
 3. **Describe your vibe** - Type something like "moody noir with cyan shadows" or "warm 70s Kodak film"
 4. **Generate** - Click "Generate Look" and watch the AI dial in the grade
 5. **Export** - Download the `.cube` file and import it into your NLE
+
+### Example Prompts
+
+Not sure what to type? Try these:
+
+| Prompt | Result |
+|--------|--------|
+| `Blade Runner 2049 teal and orange` | Cool cyan shadows, warm orange highlights, high contrast |
+| `Warm 70s Kodak film stock` | Lifted blacks, warm highlights, slight desaturation |
+| `Matrix green sci-fi` | Green tint in midtones, crushed blacks, cool highlights |
+| `Wes Anderson pastel hotel` | Soft contrast, muted pastels, balanced exposure |
+| `Moody noir detective film` | Deep shadows, desaturated, cool temperature |
+| `Golden hour magic hour warmth` | Orange/amber push, soft contrast, glowing highlights |
+| `Cyberpunk neon city night` | High contrast, saturated, teal/magenta split |
+| `Faded vintage Instagram` | Lifted blacks, low saturation, slight color cast |
+
+The AI understands film references, color terms, moods, and even specific movies/shows.
 
 ---
 
@@ -282,6 +315,38 @@ AWG to Rec.709:
 [-0.0706,  1.3346, -0.2640]
 [-0.0211, -0.2270,  1.2481]
 ```
+
+---
+
+## 🔧 Troubleshooting
+
+### "API Key is missing" Error
+- Make sure you created a `.env` file in the project root (not in a subfolder)
+- The variable must be named `GEMINI_API_KEY` (not `API_KEY` or `GOOGLE_API_KEY`)
+- Restart the dev server after adding the key
+
+### Image Looks "Deep Fried" / Oversaturated
+This usually means a **color space mismatch**:
+- If your image is already Rec.709 (exported from Resolve/Premiere), set IDT to **Rec.709**
+- If you're using raw Log footage, select the matching camera profile
+- Don't apply a Log IDT to an already-converted image (double transform = bad)
+
+### DaVinci Resolve Bridge Won't Connect
+1. **Is Resolve open?** The bridge needs a running instance
+2. **Is it Resolve Studio?** Free version doesn't support scripting
+3. **Is scripting enabled?** Resolve → Preferences → System → General → External Scripting: **Local**
+4. **Is a clip selected?** Go to the Color page and click on a clip (red outline)
+5. **Do you have 2+ nodes?** The bridge targets Node 2 by default
+
+### LUT Looks Different in Resolve vs Preview
+- The web preview uses sRGB; Resolve uses your project color settings
+- For best matching, set your Resolve timeline to Rec.709 Gamma 2.4
+- Export a CST-converted frame from Resolve for most accurate preview
+
+### Generation Takes Forever / Fails
+- Check your internet connection
+- Google AI Studio may have rate limits on free tier
+- Try a simpler prompt first to test
 
 ---
 
