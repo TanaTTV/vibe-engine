@@ -39,3 +39,8 @@ By exporting a frame **after** your Color Space Transform (CST), you give the en
 
 You are now ready to generate looks!
 
+
+
+
+
+

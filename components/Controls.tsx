@@ -10,6 +10,8 @@ interface ControlsProps {
   isGenerating: boolean;
   onDownloadLut: () => void;
   onExportBridge: () => void;
+  onSyncToResolve: () => void;
+  isSyncing: boolean;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRequestAutoWB: () => void;
 }
@@ -23,6 +25,8 @@ const Controls: React.FC<ControlsProps> = ({
   isGenerating,
   onDownloadLut,
   onExportBridge,
+  onSyncToResolve,
+  isSyncing,
   onImageUpload,
   onRequestAutoWB
 }) => {
@@ -236,19 +240,40 @@ const Controls: React.FC<ControlsProps> = ({
 
       {/* Footer / Export */}
       <div className="p-4 border-t border-resolve-border space-y-2">
+        {/* Sync Button */}
         <button 
-            onClick={onDownloadLut}
-            className="w-full py-3 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors rounded"
+            onClick={onSyncToResolve}
+            disabled={isSyncing}
+            className={`w-full py-3 text-xs font-bold uppercase tracking-widest transition-colors rounded flex items-center justify-center gap-2
+                ${isSyncing ? 'bg-orange-900/50 text-orange-200 cursor-wait' : 'bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20'}
+            `}
         >
-            Download .CUBE
+            {isSyncing ? (
+                <>
+                   <span className="w-2 h-2 rounded-full bg-white animate-ping"></span>
+                   Syncing...
+                </>
+            ) : (
+                <>
+                   <span>⚡ Sync to Resolve</span>
+                </>
+            )}
         </button>
-        <button 
-            onClick={onExportBridge}
-            className="w-full py-3 border border-resolve-accent text-resolve-accent text-xs font-bold uppercase tracking-widest hover:bg-resolve-accent/10 transition-colors rounded flex flex-col items-center"
-        >
-            <span>Export to Resolve</span>
-            <span className="text-[9px] text-gray-400 normal-case">(Downloads Blueprint + LUT)</span>
-        </button>
+
+        <div className="flex gap-2">
+            <button 
+                onClick={onDownloadLut}
+                className="flex-1 py-3 bg-[#2a2a2a] border border-gray-700 text-gray-300 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-700 transition-colors rounded"
+            >
+                Download .CUBE
+            </button>
+            <button 
+                onClick={onExportBridge}
+                className="flex-1 py-3 bg-[#2a2a2a] border border-gray-700 text-gray-300 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-700 transition-colors rounded"
+            >
+                Export JSON
+            </button>
+        </div>
       </div>
     </div>
   );

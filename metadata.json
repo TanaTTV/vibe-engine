@@ -1,5 +1,0 @@
-{
-  "name": "Vibe-to-LUT Engine",
-  "description": "AI-powered color grading tool for filmmakers. Converts text descriptions into professional, signal-safe 3D LUTs (.cube) for DaVinci Resolve.",
-  "requestFramePermissions": []
-}

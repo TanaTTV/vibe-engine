@@ -52,3 +52,8 @@ This usually happens due to a Color Space mismatch or double-application.
 - Ensure "External Scripting" is set to "Local" in Resolve Preferences.
 - Ensure you are running the **Studio** version of Resolve.
 
+
+
+
+
+

@@ -245,7 +245,7 @@ export const processPixel = (
 
 export const generateLutFile = (params: ColorParams, config: LutConfig): string => {
   const size = 33;
-  let fileContent = `TITLE "Vibe-Engine_v2.1_Pro"\n`;
+  let fileContent = `TITLE "Vibe-Engine_v2.1"\n`;
   fileContent += `LUT_3D_SIZE ${size}\n\n`;
 
   for (let b = 0; b < size; b++) {

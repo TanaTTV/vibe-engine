@@ -1,8 +1,19 @@
 {
-  "name": "vibe-to-lut-engine",
-  "private": true,
-  "version": "2.1.0-beta",
+  "name": "vibe-engine",
+  "version": "2.1.0",
+  "description": "AI-powered color grading engine that converts natural language descriptions into professional 3D LUTs",
   "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "color-grading",
+    "lut",
+    "filmmaking",
+    "video-editing",
+    "davinci-resolve",
+    "ai",
+    "gemini",
+    "color-science"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,8 +21,8 @@
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0"
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
